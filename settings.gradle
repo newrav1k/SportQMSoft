@@ -1,0 +1,3 @@
+rootProject.name = 'SportQMSoft'
+
+include 'user-service', 'schedule-service', 'queue-service', 'notification-service', 'analytics-service'
