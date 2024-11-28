@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Аутентификация</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #eef2f7;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+
+        header {
+            background-color: #37474f;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        header nav a {
+            color: white;
+            text-decoration: none;
+            margin-left: 15px;
+            font-size: 14px;
+        }
+
+        header nav a:hover {
+            text-decoration: underline;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-container {
+            display: none;
+        }
+
+        .form-container.active {
+            display: block;
+        }
+
+        .form-container h2 {
+            font-size: 22px;
+            margin-bottom: 20px;
+            color: #37474f;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .form-group button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .form-group button:hover {
+            background-color: #0056b3;
+        }
+
+        .toggle-link {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .toggle-link a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .toggle-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Система тренировок</h1>
+    <nav>
+        <a href="/">Главная</a>
+        <a href="/sections">Секции</a>
+        <a href="/dashboard">Дэшборд</a>
+    </nav>
+</header>
+
+<div class="container">
+    <div class="form-container active" id="login-form-container">
+        <h2>Вход в систему</h2>
+        <form id="login-form">
+            <div class="form-group">
+                <label for="login-email">Email:</label>
+                <input type="email" id="login-email" name="email" required placeholder="Введите ваш email">
+            </div>
+
+            <div class="form-group">
+                <label for="login-password">Пароль:</label>
+                <input type="password" id="login-password" name="password" required placeholder="Введите ваш пароль">
+            </div>
+
+            <div class="form-group">
+                <button type="submit">Войти</button>
+            </div>
+        </form>
+        <div class="toggle-link">
+            <p>Нет аккаунта? <a href="javascript:void(0);" onclick="toggleForm('register')">Зарегистрируйтесь</a></p>
+        </div>
+    </div>
+
+    <div class="form-container" id="register-form-container">
+        <h2>Регистрация</h2>
+        <form id="register-form">
+            <div class="form-group">
+                <label for="register-name">Имя:</label>
+                <input type="text" id="register-name" name="firstname" required placeholder="Введите ваше имя">
+            </div>
+
+            <div class="form-group">
+                <label for="register-surname">Фамилия:</label>
+                <input type="text" id="register-surname" name="lastname" required placeholder="Введите вашу фамилию">
+            </div>
+
+            <div class="form-group">
+                <label for="register-email">Email:</label>
+                <input type="email" id="register-email" name="email" required placeholder="Введите ваш email">
+            </div>
+
+            <div class="form-group">
+                <label for="register-phone">Телефон:</label>
+                <input type="tel" id="register-phone" name="phone" required placeholder="Введите ваш телефон">
+            </div>
+
+            <div class="form-group">
+                <label for="register-password">Пароль:</label>
+                <input type="password" id="register-password" name="password" required placeholder="Введите пароль">
+            </div>
+
+            <div class="form-group">
+                <label for="register-confirm-password">Подтвердите пароль:</label>
+                <input type="password" id="register-confirm-password" name="confirm-password" required
+                       placeholder="Подтвердите пароль">
+            </div>
+
+            <div class="form-group">
+                <button type="submit">Зарегистрироваться</button>
+            </div>
+        </form>
+        <div class="toggle-link">
+            <p>Уже есть аккаунт? <a href="javascript:void(0);" onclick="toggleForm('login')">Войти</a></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_HOST = 'http://localhost:8081';
+
+    function toggleForm(formType) {
+        document.getElementById('login-form-container').classList.toggle('active', formType === 'login');
+        document.getElementById('register-form-container').classList.toggle('active', formType === 'register');
+    }
+
+    function validateFormData(formType) {
+        const form = document.getElementById(`${formType}-form`);
+        return form.checkValidity();
+    }
+
+    async function submitRegisterForm(event) {
+        event.preventDefault();
+        if (!validateFormData('register')) return;
+
+        const formData = new FormData(event.target);
+        const data = Object.fromEntries(formData);
+
+        if (data.password !== data['confirm-password']) {
+            alert('Пароли не совпадают');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_HOST}/register`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data),
+            });
+            const result = await response.json();
+            if (response.ok) {
+                alert('Регистрация успешна! Войдите в систему.');
+                toggleForm('login');
+            } else {
+                alert(result.message || 'Ошибка регистрации');
+            }
+        } catch {
+            alert('Ошибка подключения к серверу.');
+        }
+    }
+
+    async function submitLoginForm(event) {
+        event.preventDefault();
+        if (!validateFormData('login')) return;
+
+        const data = {
+            username: document.getElementById('login-email').value,
+            password: document.getElementById('login-password').value,
+        };
+
+        try {
+            const response = await fetch(`${API_HOST}/login`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data),
+            });
+            const result = await response.json();
+            if (response.ok) {
+                alert('Добро пожаловать!');
+                localStorage.setItem('user', JSON.stringify(result));
+
+                const userJson = localStorage.getItem('user');
+                if (JSON.parse(userJson).role === "ADMINISTRATOR") {
+                    window.location.href = '/admin_dashboard.html';
+                } else if (JSON.parse(userJson).role === "TRAINER") {
+                    window.location.href = '/trainer_dashboard.html';
+                } else {
+                    window.location.href = '/user_dashboard.html';
+                }
+            } else {
+                alert(result.message || 'Ошибка входа');
+            }
+        } catch {
+            alert('Ошибка подключения к серверу.');
+        }
+    }
+
+    document.getElementById('register-form').addEventListener('submit', submitRegisterForm);
+    document.getElementById('login-form').addEventListener('submit', submitLoginForm);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный кабинет пользователя</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">Личный кабинет</a>
+    </div>
+</nav>
+
+<div class="container mt-5">
+    <h1 class="mb-4">Добро пожаловать, [Имя пользователя]!</h1>
+
+    <div class="row">
+        <!-- Запись на тренировку -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    Записаться на тренировку
+                </div>
+                <div class="card-body">
+                    <p>Выберите подходящую тренировку из расписания и запишитесь.</p>
+                    <a href="#" class="btn btn-primary">Посмотреть расписание</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Уведомления -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    Уведомления
+                </div>
+                <div class="card-body">
+                    <p>Получайте напоминания и уведомления о тренировках.</p>
+                    <a href="#" class="btn btn-warning">Посмотреть уведомления</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <!-- Мои записи -->
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    Мои записи
+                </div>
+                <div class="card-body">
+                    <p>Просмотрите свои записи на тренировки:</p>
+                    <ul class="list-group" id="records-list">
+                        <li class="list-group-item">Загрузка данных...</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="bg-dark text-center text-white py-3 mt-5">
+    &copy; 2024 Система управления очередями спортивного клуба
+</footer>
+
+<script>
+    const userServiceUrl = 'http://localhost:8081'; // Базовый URL для запросов
+    const scheduleServiceUrl = 'http://localhost:8082'; // Базовый URL для запросов
+
+    const userJson = localStorage.getItem('user');
+    const userId = JSON.parse(userJson).id;
+
+    // Функция загрузки записей пользователя
+    function loadRecords() {
+        fetch(`${scheduleServiceUrl}/api/schedule/${userId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Ошибка загрузки записей: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                const list = document.getElementById('records-list');
+                list.innerHTML = ''; // Очищаем список
+                if (data.length === 0) {
+                    list.innerHTML = '<li class="list-group-item">Нет записей</li>';
+                } else {
+                    data.forEach(training => {
+                        const listItem = `
+                                <li class="list-group-item">
+                                    <strong>Тренировка:</strong> ${training.title}<br>
+                                    <strong>Дата:</strong> ${training.startDate}<br>
+                                    <strong>Время:</strong> ${training.startTime}
+                                    <button class="btn btn-danger btn-sm float-end" onclick="cancelRecord(${training.id})">Отменить</button>
+                                </li>`;
+                        list.innerHTML += listItem;
+                    });
+                }
+            })
+            .catch(error => {
+                const list = document.getElementById('records-list');
+                list.innerHTML = `<li class="list-group-item text-danger">Ошибка загрузки данных: ${error.message}</li>`;
+                console.error(error);
+            });
+    }
+
+
+    // Функция отмены записи
+    function cancelRecord(trainingId) {
+        fetch(`${scheduleServiceUrl}/api/schedule/${trainingId}`, {method: 'DELETE'})
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Ошибка отмены записи: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(() => loadRecords()) // Перезагружаем записи
+            .catch(error => console.error('Ошибка отмены записи:', error));
+    }
+
+    // Загружаем записи при загрузке страницы
+    document.addEventListener('DOMContentLoaded', loadRecords);
+</script>
+</body>
+</html>

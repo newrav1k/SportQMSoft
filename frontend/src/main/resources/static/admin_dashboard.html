@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Личный кабинет</title>
+</head>
+<body>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный кабинет администратора</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">Кабинет администратора</a>
+    </div>
+</nav>
+
+<div class="container mt-5">
+    <h1 class="mb-4">Добро пожаловать, Администратор!</h1>
+
+    <div class="row">
+        <!-- Управление секциями -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    Управление секциями
+                </div>
+                <div class="card-body">
+                    <form id="create-section-form">
+                        <div class="mb-3">
+                            <label for="sectionName" class="form-label">Название секции</label>
+                            <input type="text" class="form-control" id="sectionName" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Добавить секцию</button>
+                    </form>
+                    <hr>
+                    <p>Список секций:</p>
+                    <ul class="list-group" id="sections-list">
+                        <li class="list-group-item">Загрузка данных...</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Управление расписанием -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    Управление расписанием
+                </div>
+                <div class="card-body">
+                    <form id="create-schedule-form">
+                        <div class="mb-3">
+                            <label for="scheduleSection" class="form-label">Секция</label>
+                            <select class="form-select" id="scheduleSection" required>
+                                <option selected disabled value="">Выберите секцию</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="scheduleTrainer" class="form-label">Тренер</label>
+                            <select class="form-select" id="scheduleTrainer" required>
+                                <option selected disabled value="">Выберите тренера</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="scheduleDate" class="form-label">Дата</label>
+                            <input type="date" class="form-control" id="scheduleDate" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="scheduleTime" class="form-label">Время</label>
+                            <input type="time" class="form-control" id="scheduleTime" required>
+                        </div>
+                        <button type="submit" class="btn btn-success">Добавить тренировку</button>
+                    </form>
+                    <hr>
+                    <p>Расписание:</p>
+                    <ul class="list-group" id="schedule-list">
+                        <li class="list-group-item">Загрузка данных...</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <!-- Список пользователей -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    Список пользователей
+                </div>
+                <div class="card-body">
+                    <p>Список всех зарегистрированных пользователей:</p>
+                    <ul class="list-group" id="users-list">
+                        <li class="list-group-item">Загрузка данных...</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Список тренеров -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-info text-dark">
+                    Список тренеров и их секции
+                </div>
+                <div class="card-body">
+                    <p>Список всех зарегистрированных тренеров с секциями:</p>
+                    <ul class="list-group" id="trainers-list">
+                        <li class="list-group-item">Загрузка данных...</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="bg-dark text-center text-white py-3 mt-5">
+    &copy; 2024 Система управления очередями спортивного клуба
+</footer>
+
+<script>
+    const apiBaseUrl = 'http://localhost:8081'; // Базовый URL для API
+
+    // Загрузка пользователей
+    function loadUsers() {
+        fetch(`${apiBaseUrl}/api/users`)
+            .then(response => response.json())
+            .then(data => {
+                const list = document.getElementById('users-list');
+                list.innerHTML = '';
+                if (data.length === 0) {
+                    list.innerHTML = '<li class="list-group-item">Нет зарегистрированных пользователей</li>';
+                } else {
+                    data.forEach(user => {
+                        list.innerHTML += `<li class="list-group-item">${user.firstName} ${user.lastName} (${user.username})</li>`;
+                    });
+                }
+            })
+            .catch(error => console.error('Ошибка загрузки пользователей:', error));
+    }
+
+    // Загрузка тренеров с секциями
+    function loadTrainers() {
+        fetch(`${apiBaseUrl}/api/trainers-with-sections`)
+            .then(response => response.json())
+            .then(data => {
+                const list = document.getElementById('trainers-list');
+                list.innerHTML = '';
+                if (data.length === 0) {
+                    list.innerHTML = '<li class="list-group-item">Нет зарегистрированных тренеров</li>';
+                } else {
+                    data.forEach(trainer => {
+                        const sections = trainer.sections.map(sec => sec.name).join(', ');
+                        list.innerHTML += `
+              <li class="list-group-item">
+                <strong>${trainer.name}</strong> (${trainer.email})<br>
+                <strong>Секции:</strong> ${sections || 'Нет секций'}
+              </li>`;
+                    });
+                }
+            })
+            .catch(error => console.error('Ошибка загрузки тренеров:', error));
+    }
+
+    // Загрузка секций
+    function loadSections() {
+        fetch(`${apiBaseUrl}/api/sections`)
+            .then(response => response.json())
+            .then(data => {
+                const sectionList = document.getElementById('sections-list');
+                const sectionSelect = document.getElementById('scheduleSection');
+                sectionList.innerHTML = '';
+                sectionSelect.innerHTML = '<option selected disabled value="">Выберите секцию</option>';
+                if (data.length === 0) {
+                    sectionList.innerHTML = '<li class="list-group-item">Нет секций</li>';
+                } else {
+                    data.forEach(section => {
+                        sectionList.innerHTML += `<li class="list-group-item">${section.name}</li>`;
+                        sectionSelect.innerHTML += `<option value="${section.id}">${section.name}</option>`;
+                    });
+                }
+            })
+            .catch(error => console.error('Ошибка загрузки секций:', error));
+    }
+
+    // Загрузка данных при загрузке страницы
+    document.addEventListener('DOMContentLoaded', () => {
+        loadUsers();
+        loadTrainers();
+        loadSections();
+    });
+</script>
+</body>
+</html>

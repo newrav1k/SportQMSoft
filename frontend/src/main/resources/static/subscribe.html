@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Запись на секцию</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .status {
+            text-align: center;
+            margin-top: 10px;
+            color: #28a745;
+        }
+
+        .error {
+            text-align: center;
+            margin-top: 10px;
+            color: #dc3545;
+        }
+
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .loading {
+            text-align: center;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Запись на тренировку</h1>
+    <form id="registration-form">
+        <label for="user-name">Имя</label>
+        <input type="text" id="user-name" placeholder="Введите ваше имя" required>
+
+        <label for="user-email">Email</label>
+        <input type="email" id="user-email" placeholder="Введите ваш email" required>
+
+        <label for="user-phone">Телефон</label>
+        <input type="tel" id="user-phone" placeholder="Введите ваш телефон" required>
+
+        <label for="user-birthdate">Дата рождения</label>
+        <input type="date" id="user-birthdate" required>
+
+        <label for="section-list">Выберите секцию</label>
+        <select id="section-list" required>
+            <option value="" disabled selected>Загрузка секций...</option>
+        </select>
+
+        <button type="submit">Записаться</button>
+    </form>
+    <p id="status-message" class="status"></p>
+    <p id="error-message" class="error"></p>
+</div>
+
+<script>
+    const SCHEDULE_API = 'http://localhost:8080/schedule';
+    const QUEUE_API = 'http://localhost:8080/queue';
+
+    // Загрузка доступных секций
+    async function fetchSections() {
+        try {
+            const response = await fetch(`${SCHEDULE_API}`);
+            const sections = await response.json();
+            const sectionList = document.getElementById('section-list');
+            sectionList.innerHTML = '';  // Очистить список
+
+            if (sections.length === 0) {
+                sectionList.innerHTML = '<option disabled selected>Нет доступных секций</option>';
+                return;
+            }
+
+            sections.forEach(section => {
+                if (section.availableSlots > 0) {  // Проверка доступности места
+                    const option = document.createElement('option');
+                    option.value = section.id;
+                    option.textContent = `${section.name} (${section.time}) - доступно ${section.availableSlots} мест`;
+                    sectionList.appendChild(option);
+                }
+            });
+
+            if (sectionList.children.length === 0) {
+                sectionList.innerHTML = '<option disabled selected>Все секции заняты</option>';
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки секций:', error);
+            document.getElementById('error-message').textContent = 'Не удалось загрузить секции.';
+        }
+    }
+
+    // Отправка данных пользователя и записи на секцию
+    document.getElementById('registration-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const name = document.getElementById('user-name').value;
+        const email = document.getElementById('user-email').value;
+        const phone = document.getElementById('user-phone').value;
+        const birthdate = document.getElementById('user-birthdate').value;
+        const sectionId = document.getElementById('section-list').value;
+
+        if (!sectionId) {
+            document.getElementById('error-message').textContent = 'Пожалуйста, выберите доступную секцию.';
+            return;
+        }
+
+        try {
+            const response = await fetch(`${QUEUE_API}/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({name, email, phone, birthdate, sectionId})
+            });
+
+            const statusMessage = document.getElementById('status-message');
+            const errorMessage = document.getElementById('error-message');
+            if (response.ok) {
+                statusMessage.textContent = 'Вы успешно записались на тренировку!';
+                errorMessage.textContent = '';
+            } else {
+                statusMessage.textContent = '';
+                errorMessage.textContent = 'Ошибка записи. Попробуйте снова.';
+            }
+        } catch (error) {
+            console.error('Ошибка записи:', error);
+            document.getElementById('error-message').textContent = 'Произошла ошибка. Попробуйте позже.';
+        }
+    });
+
+    // Инициализация
+    fetchSections();
+</script>
+</body>
+</html>

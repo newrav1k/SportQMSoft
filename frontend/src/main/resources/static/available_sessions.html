@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Секции и запись на тренировки</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">Секции и запись на тренировки</a>
+    </div>
+</nav>
+
+<div class="container mt-5">
+    <h1 class="mb-4">Секции и доступные тренировки</h1>
+    <div id="table-container">
+        <p>Загрузка данных...</p>
+    </div>
+</div>
+
+<footer class="bg-dark text-center text-white py-3 mt-5">
+    &copy; 2024 Система управления очередями спортивного клуба
+</footer>
+
+<script>
+    const scheduleServiceUrl = 'http://localhost:8082/api/schedule'; // URL для Schedule Service
+    const queueServiceUrl = 'http://localhost:8083/api/queue';       // URL для Queue Service
+
+    // Загрузка секций и тренировок
+    function loadSectionsAndTrainings() {
+        fetch(`${scheduleServiceUrl}/sections`)
+            .then(response => response.json())
+            .then(data => {
+                const container = document.getElementById('table-container');
+                container.innerHTML = ''; // Очистка контейнера
+
+                if (data.length === 0) {
+                    container.innerHTML = '<p>Нет доступных секций и тренировок.</p>';
+                } else {
+                    // Создаем таблицу
+                    const table = document.createElement('table');
+                    table.className = 'table table-bordered table-striped';
+
+                    // Заголовок таблицы
+                    table.innerHTML = `
+            <thead class="table-dark">
+              <tr>
+                <th>Секция</th>
+                <th>Тренировка</th>
+                <th>Дата</th>
+                <th>Время</th>
+                <th>Свободные места</th>
+                <th>Действие</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${data.map(section => {
+                        return section.trainings.length > 0
+                            ? section.trainings.map((training, index) => `
+                      <tr>
+                        ${index === 0
+                                ? `<td rowspan="${section.trainings.length}" class="align-middle"><strong>${section.name}</strong></td>`
+                                : ''}
+                        <td>${training.name}</td>
+                        <td>${training.date}</td>
+                        <td>${training.time}</td>
+                        <td>${training.availableSlots > 0 ? training.availableSlots : 'Нет мест'}</td>
+                        <td>
+                          ${training.availableSlots > 0
+                                ? `<button class="btn btn-primary btn-sm" onclick="bookSlot(${training.id})">Записаться</button>`
+                                : '<span class="text-muted">Запись недоступна</span>'}
+                        </td>
+                      </tr>
+                    `).join('')
+                            : `
+                      <tr>
+                        <td><strong>${section.name}</strong></td>
+                        <td colspan="5" class="text-center">Нет доступных тренировок</td>
+                      </tr>
+                    `;
+                    }).join('')}
+            </tbody>
+          `;
+
+                    container.appendChild(table);
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка загрузки данных:', error);
+                const container = document.getElementById('table-container');
+                container.innerHTML = '<p class="text-danger">Ошибка загрузки данных.</p>';
+            });
+    }
+
+    // Запись на тренировку
+    function bookSlot(trainingId) {
+        fetch(`${queueServiceUrl}/register`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({trainingId: trainingId})
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Ошибка при записи на тренировку');
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert(`Вы успешно записаны на тренировку: ${data.trainingName}`);
+                loadSectionsAndTrainings(); // Обновляем список
+            })
+            .catch(error => {
+                console.error('Ошибка записи:', error);
+                alert('Не удалось записаться на тренировку. Попробуйте позже.');
+            });
+    }
+
+    // Загрузка данных при загрузке страницы
+    document.addEventListener('DOMContentLoaded', () => {
+        loadSectionsAndTrainings();
+    });
+</script>
+</body>
+</html>
