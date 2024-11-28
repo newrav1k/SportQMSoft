@@ -1,3 +1,17 @@
 spring:
   application:
     name: schedule-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/SportQMSoft_schedule-service
+    username: postgres
+    password: root
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+server:
+  port: 8082
