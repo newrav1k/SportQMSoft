@@ -127,11 +127,14 @@
 </footer>
 
 <script>
+    const userServiceUrl = 'http://localhost:8081'; // Базовый URL для запросов
+    const scheduleServiceUrl = 'http://localhost:8082'; // Базовый URL для запросов
+
     const apiBaseUrl = 'http://localhost:8081'; // Базовый URL для API
 
     // Загрузка пользователей
     function loadUsers() {
-        fetch(`${apiBaseUrl}/api/users`)
+        fetch(`${userServiceUrl}/api/users`)
             .then(response => response.json())
             .then(data => {
                 const list = document.getElementById('users-list');
@@ -149,7 +152,7 @@
 
     // Загрузка тренеров с секциями
     function loadTrainers() {
-        fetch(`${apiBaseUrl}/api/trainers-with-sections`)
+        fetch(`${userServiceUrl}/api/trainers`)
             .then(response => response.json())
             .then(data => {
                 const list = document.getElementById('trainers-list');
@@ -172,7 +175,7 @@
 
     // Загрузка секций
     function loadSections() {
-        fetch(`${apiBaseUrl}/api/sections`)
+        fetch(`${scheduleServiceUrl}/api/sections`)
             .then(response => response.json())
             .then(data => {
                 const sectionList = document.getElementById('sections-list');

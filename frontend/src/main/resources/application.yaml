@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: frontend
+  devtools:
+    livereload:
+      enabled: true
+server:
+  port: 8080
